@@ -23,11 +23,11 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
         ]);
     }
 
-    public function test_seeder_creates_exactly_ten_posts(): void
+    public function test_seeder_creates_exactly_twenty_posts(): void
     {
         $this->seed(LawFirmInitialBlogPostsSeeder::class);
 
-        $this->assertSame(10, Post::query()->count());
+        $this->assertSame(20, Post::query()->count());
     }
 
     public function test_seeder_is_idempotent(): void
@@ -35,7 +35,7 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
         $this->seed(LawFirmInitialBlogPostsSeeder::class);
         $this->seed(LawFirmInitialBlogPostsSeeder::class);
 
-        $this->assertSame(10, Post::query()->count());
+        $this->assertSame(20, Post::query()->count());
     }
 
     public function test_all_posts_are_drafts_and_not_published(): void
@@ -44,7 +44,7 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
 
         $posts = Post::query()->get();
 
-        $this->assertCount(10, $posts);
+        $this->assertCount(20, $posts);
         foreach ($posts as $post) {
             $this->assertSame('draft', $post->status);
             $this->assertNull($post->published_at);
@@ -58,7 +58,7 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
 
         $posts = Post::query()->get();
 
-        $this->assertCount(10, $posts);
+        $this->assertCount(20, $posts);
         foreach ($posts as $post) {
             $this->assertNotEmpty($post->title, "Post ID {$post->id} missing title");
             $this->assertNotEmpty($post->slug, "Post ID {$post->id} missing slug");
@@ -82,6 +82,25 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
                 $post->body,
                 "Post '{$post->title}' is missing the required legal disclaimer."
             );
+        }
+    }
+
+    public function test_high_priority_posts_exist_and_have_custom_conclusions(): void
+    {
+        $this->seed(LawFirmInitialBlogPostsSeeder::class);
+
+        $highPrioritySlugs = [
+            'قبل-دخول-شريك-جديد-ما-الاتفاقات-التي-تحمي-الشركة',
+            'هل-تكفي-رسائل-واتساب-والبريد-الإلكتروني-لإثبات-حق-شركتك',
+            'عقد-التطوير-العقاري-أين-تبدأ-المخاطر-قبل-أن-يبدأ-المشروع',
+            'العقار-المملوك-على-الشيوع-كيف-تدار-القرارات-عند-اختلاف-الملاك',
+        ];
+
+        foreach ($highPrioritySlugs as $slug) {
+            $post = Post::query()->where('slug', $slug)->first();
+            $this->assertNotNull($post, "High priority post missing for slug {$slug}");
+            $this->assertStringContainsString('class="article-conclusion"', $post->body);
+            $this->assertStringDontSee('تواصل معنا', $post->body);
         }
     }
 
