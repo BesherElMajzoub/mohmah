@@ -3,7 +3,334 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* ==========================================================================
+   "Calm Authority" — design tokens
+   ==========================================================================
+   A restrained palette for corporate law, arbitration, notarisation and
+   real-estate work. Gold is an accent only: hairlines, small marks, focus
+   rings. It is never a fill, never a gradient, and never paired with black —
+   that combination reads as the generic legal template this identity exists
+   to avoid.
+   ========================================================================== */
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* --- Brand ----------------------------------------------------------- */
+    --color-ink-50: #eef3f2;
+    --color-ink-100: #d6e2df;
+    --color-ink-600: #1c4a44;
+    --color-ink-700: #163b36;
+    --color-ink: #102e2a; /* primary dark surface */
+    --color-ink-950: #0a1f1c;
+
+    --color-ivory: #f5f0e6; /* primary light surface */
+    --color-ivory-dim: #ebe4d6;
+
+    --color-gold: #b08d57; /* accent — borders and small highlights only */
+    --color-gold-soft: #c9ab7d;
+    --color-gold-deep: #8e7043;
+
+    --color-charcoal: #202423; /* body text on light */
+    --color-charcoal-soft: #4a504e;
+
+    --color-stone: #d7cebf; /* secondary neutral surface */
+    --color-stone-soft: #e5dfd4;
+
+    /* --- Type ------------------------------------------------------------
+       Two families, strictly separated by role. The fallback stacks name real
+       Arabic system fonts so the first paint is already shaped correctly and
+       the swap is a refinement rather than a reflow into a different script. */
+    --font-display: 'Noto Kufi Arabic', 'Segoe UI', 'Tahoma', sans-serif;
+    --font-sans: 'IBM Plex Sans Arabic', 'Segoe UI', 'Tahoma', sans-serif;
+
+    /* Arabic needs more leading than Latin at the same size — the ascenders
+       and descenders of the script collide at typical Latin line-heights. */
+    --text-xs: 0.8125rem;
+    --text-xs--line-height: 1.8;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.85;
+    --text-base: 1.0625rem;
+    --text-base--line-height: 2;
+    --text-lg: 1.1875rem;
+    --text-lg--line-height: 1.9;
+    --text-xl: 1.375rem;
+    --text-xl--line-height: 1.7;
+    --text-2xl: 1.625rem;
+    --text-2xl--line-height: 1.6;
+    --text-3xl: 2rem;
+    --text-3xl--line-height: 1.45;
+    --text-4xl: 2.5rem;
+    --text-4xl--line-height: 1.35;
+    --text-5xl: 3.25rem;
+    --text-5xl--line-height: 1.25;
+    --text-6xl: 4rem;
+    --text-6xl--line-height: 1.15;
+
+    /* --- Motion ----------------------------------------------------------- */
+    --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+    /* Alpine's x-cloak: hides elements until Alpine has initialised, so a
+       closed menu never flashes open during page load. */
+    [x-cloak] {
+        display: none !important;
+    }
+
+    html {
+        scroll-behavior: smooth;
+        /* Anchored sections must not land underneath the sticky header. */
+        scroll-padding-top: 6rem;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        background-color: var(--color-ivory);
+        color: var(--color-charcoal);
+        font-family: var(--font-sans);
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        /* Arabic has no uppercase; tightening tracking here would only harm
+           the joins between letters. */
+        letter-spacing: normal;
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    /* A single, unmistakable focus treatment across the whole site. Applied on
+       :focus-visible so it appears for keyboard users without putting a ring
+       around every mouse click. */
+    :focus-visible {
+        outline: 2px solid var(--color-gold);
+        outline-offset: 3px;
+        border-radius: 2px;
+    }
+
+    /* Dark surfaces need the light counterpart or the ring disappears. */
+    .on-dark :focus-visible {
+        outline-color: var(--color-gold-soft);
+    }
+
+    /* Arabic numerals inside otherwise-Arabic text render more predictably
+       when the run direction is stated explicitly. */
+    .num {
+        direction: ltr;
+        unicode-bidi: isolate;
+        font-feature-settings: 'tnum';
+    }
+
+    ::selection {
+        background-color: var(--color-gold);
+        color: var(--color-ivory);
+    }
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
+@layer components {
+    /* The hairline that carries most of the identity's structure. Uses a
+       logical border so it flips with direction without a second rule. */
+    .rule-gold {
+        border-inline-start: 2px solid var(--color-gold);
+    }
+
+    /* Document-grid motif: a faint square lattice referencing land registry
+       plans and contract margins. Deliberately low contrast — it should read
+       as paper texture, not as a pattern. */
+    .grid-motif {
+        background-image:
+            linear-gradient(to left, color-mix(in srgb, var(--color-gold) 12%, transparent) 1px, transparent 1px),
+            linear-gradient(to bottom, color-mix(in srgb, var(--color-gold) 12%, transparent) 1px, transparent 1px);
+        background-size: 72px 72px;
+    }
+
+    /* --- Hero portrait ----------------------------------------------------
+       The arch from the wordmark, enlarged to frame the lawyer. It earns its
+       place here in a way it did not around a small logo mark: an arch is for
+       framing a figure, and it ties the photograph to the identity instead of
+       leaving a cut-out floating on flat colour.
+
+       It also does structural work — the bisht is nearly as dark as the ink
+       background, so without a lighter surface behind him the silhouette
+       would disappear. */
+    .portrait-arch {
+        background:
+            radial-gradient(
+                ellipse 70% 55% at 50% 42%,
+                color-mix(in srgb, var(--color-ink-600) 85%, transparent),
+                transparent 72%
+            ),
+            linear-gradient(to top, var(--color-ink-700), color-mix(in srgb, var(--color-ink-700) 25%, transparent));
+        border: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
+        border-start-start-radius: 50% 30%;
+        border-start-end-radius: 50% 30%;
+        border-block-end: 0;
+    }
+
+    /* A staggered rise for the hero only. Each child sets --i to position
+       itself in the sequence. Globally disabled under prefers-reduced-motion
+       by the media query at the end of this file. */
+    .rise {
+        animation: rise 0.9s var(--ease-calm) backwards;
+        animation-delay: calc(var(--i, 0) * 90ms);
+    }
+
+    @keyframes rise {
+        from {
+            opacity: 0;
+            transform: translateY(0.75rem);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Long-form article body. Styles raw CMS HTML, so the selectors have to
+       target bare elements rather than classes the editor will never emit. */
+    .prose-legal {
+        font-size: var(--text-base);
+        line-height: 2;
+    }
+
+    .prose-legal > * + * {
+        margin-block-start: 1.25em;
+    }
+
+    .prose-legal h2 {
+        font-size: var(--text-2xl);
+        margin-block-start: 2.25em;
+        margin-block-end: 0.75em;
+        color: var(--color-ink);
+    }
+
+    .prose-legal h3 {
+        font-size: var(--text-xl);
+        margin-block-start: 1.75em;
+        margin-block-end: 0.5em;
+        color: var(--color-ink-700);
+    }
+
+    .prose-legal a {
+        color: var(--color-ink-600);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        text-decoration-color: var(--color-gold);
+    }
+
+    .prose-legal a:hover {
+        color: var(--color-gold-deep);
+    }
+
+    .prose-legal ul,
+    .prose-legal ol {
+        padding-inline-start: 1.5em;
+    }
+
+    .prose-legal ul {
+        list-style: none;
+    }
+
+    /* Custom marker rather than a disc: a small gold rule, matching the
+       linework used elsewhere in the identity. */
+    .prose-legal ul > li {
+        position: relative;
+        padding-inline-start: 1.25em;
+    }
+
+    .prose-legal ul > li::before {
+        content: '';
+        position: absolute;
+        inset-inline-start: 0;
+        inset-block-start: 0.95em;
+        width: 0.6em;
+        height: 1px;
+        background-color: var(--color-gold);
+    }
+
+    .prose-legal ol {
+        list-style: arabic-indic;
+    }
+
+    .prose-legal blockquote {
+        border-inline-start: 2px solid var(--color-gold);
+        padding-inline-start: 1.25em;
+        color: var(--color-charcoal-soft);
+        font-style: normal; /* Arabic has no true italic — faux-italic distorts it. */
+    }
+
+    .prose-legal figure figcaption {
+        font-size: var(--text-sm);
+        color: var(--color-charcoal-soft);
+        margin-block-start: 0.5em;
+    }
+
+    .prose-legal img {
+        border-radius: 2px;
+        height: auto;
+    }
+
+    .prose-legal table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--text-sm);
+    }
+
+    .prose-legal th,
+    .prose-legal td {
+        border: 1px solid var(--color-stone);
+        padding: 0.75em 1em;
+        text-align: start;
+    }
+
+    .prose-legal thead th {
+        background-color: var(--color-stone-soft);
+        font-family: var(--font-display);
+        font-weight: 500;
+    }
+
+    /* Wide tables scroll inside their own container rather than forcing the
+       page to scroll sideways. */
+    .prose-legal .table-scroll {
+        overflow-x: auto;
+    }
+}
+
+/* ==========================================================================
+   Reduced motion
+   ==========================================================================
+   Honoured globally rather than per-component: a visitor who has asked the
+   OS for less movement should not have to trust each animation individually.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

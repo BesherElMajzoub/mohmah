@@ -23,8 +23,11 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- pdo_sqlite is not enabled in this environment, so tests run against
+             a dedicated MySQL database. Create it once with:
+             CREATE DATABASE mohamh_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_DATABASE" value="mohamh_test"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

@@ -1,58 +1,276 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# موقع مكتب المحامي ريان الجهني
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+موقع عربي (ar-SA / RTL) لمكتب محاماة في جدة، مبني على Laravel 13 مع لوحة تحكم
+محتوى مخصّصة، وأساس تقني كامل لتحسين الظهور في محركات البحث، ونظام تتبع تحويلات
+يعمل على خادم الموقع نفسه.
 
-## About Laravel
+> **الحالة:** المرحلة الأولى مكتملة. صفحات الخدمات الأربع الرئيسية منشورة بنصوص
+> عربية أصلية؛ باقي الخدمات (١٨ خدمة) موجودة كمسودات بانتظار المرحلة الثانية.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## التشغيل
 
 ```bash
-composer require laravel/boost --dev
+composer install
+npm install
 
-php artisan boost:install
+cp .env.example .env
+php artisan key:generate
+
+# اضبط بيانات قاعدة البيانات في .env ثم:
+php artisan migrate --seed
+
+# إنشاء حساب المدير (تفاعلي — لا تُخزَّن أي كلمة مرور في المستودع)
+php artisan make:admin
+
+npm run build
+composer dev   # يشغّل الخادم + طابور المهام + Vite معاً
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+لوحة التحكم على `/admin`، وتسجيل الدخول على `/login`.
 
-## Contributing
+### الاختبارات
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan test      # 146 اختباراً
+vendor/bin/pint       # تنسيق الكود
+```
 
-## Code of Conduct
+الاختبارات تعمل على قاعدة بيانات MySQL منفصلة اسمها `mohamh_test`
+(‏`pdo_sqlite` غير مفعّلة في بيئة التطوير الحالية). أنشئها مرة واحدة:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```sql
+CREATE DATABASE mohamh_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## البنية
 
-## License
+### طبقات المشروع
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| الطبقة | الموقع | الدور |
+|---|---|---|
+| المحتوى العام | `app/Http/Controllers/*.php` + `resources/views/pages/` | الصفحات التي يراها الزائر |
+| لوحة التحكم | `app/Http/Controllers/Admin/` + `resources/views/admin/` | إدارة المحتوى، منفصلة تماماً |
+| نموذج البيانات | `app/Models/` | مع `Concerns/HasSeo` و `Concerns/Publishable` |
+| SEO | `app/Support/Seo/` | `SeoData` (DTO) و `Schema` (JSON-LD) |
+| المساعدات | `app/Support/` | `Url`، `ArabicSlug`، `Settings`، `Content` |
+
+### قرارات تصميمية مهمة
+
+**الروابط العربية.** المعرّفات (slugs) مخزّنة بالعربية كما هي. المشكلة ليست في
+المطابقة — Laravel يطابقها مباشرة — بل في التوليد: الصفحة الواحدة يمكن كتابتها
+بصيغتين (عربية مقروءة، ومُرمّزة `%D8%…`). لذلك كل رابط يُصدره الموقع يمرّ عبر
+`App\Support\Url` وحده، فتتطابق الوسوم القانونية وخريطة الموقع والبيانات
+المنظمة حرفاً بحرف.
+
+**ربط النماذج بالمسارات.** الربط بالـ slug مُعلن في ملف المسارات
+(`{service:slug}`) لا في النماذج، لأن لوحة التحكم تخاطب السجلات بالمعرّف الرقمي —
+وربط عام بالـ slug كان سيُعطّل كل روابط التحرير.
+
+**مسار المدونة.** الأقسام والمقالات تتشارك الشكل `/المدونة/{slug}`، ولا يمكن
+فصلها إلى مسارين: الربط الضمني يُنهي الطلب بـ 404 عند عدم إيجاد نموذج المسار
+الأول بدلاً من الانتقال إلى الثاني، مما كان سيجعل كل روابط المقالات غير قابلة
+للوصول. لذلك مسار واحد يوزّع حسب ما يطابقه المعرّف فعلياً.
+
+**تحويلات الروابط القديمة.** تُعالَج في معالج الاستثناءات
+(`App\Exceptions\LegacyRedirectHandler`) لا في وسيط (middleware)، لأن الرابط الذي
+لا يطابق أي مسار لا يدخل مجموعة وسائط `web` أصلاً. النتيجة: الصفحة الحقيقية
+تفوز دائماً، ولا يُستعلم عن جدول التحويلات إلا للروابط التي لا يخدمها التطبيق.
+
+---
+
+## خريطة الموقع — إضافة المقالات تلقائياً
+
+المتطلب: **نشر مقال يضعه في خريطة الموقع فوراً، دون أي خطوة إضافية.**
+
+الآلية:
+
+1. `SitemapController` يبني الخريطة من **استعلام حيّ** لقاعدة البيانات، لا من
+   ملف مُولَّد مسبقاً.
+2. النتيجة تُخزَّن مؤقتاً، و`SitemapCacheObserver` يمسح هذا التخزين عند كل حفظ
+   أو حذف لأي `Post` أو `Service` أو `Page` أو `PostCategory`.
+3. شرط الإدراج هو نطاق `published()` نفسه الذي تستخدمه الصفحات العامة — لذلك
+   **يستحيل** أن تُدرج الخريطة رابطاً يعيد 404: المسودة والمقال المجدول والصفحة
+   المستبعدة من الفهرسة تُستثنى من الاثنين بالشرط ذاته.
+
+مغطّى باختبارات في `tests/Feature/SitemapTest.php`، منها اختبار يجلب **كل** رابط
+تذكره الخريطة ويتحقق من أنه يعيد 200 فعلاً.
+
+---
+
+## تتبع النقرات
+
+نظام تحويلات مستقل على خادم الموقع، إلى جانب GA4 لا بدلاً منه — لأن أدوات
+التحليل الخارجية يحجبها جزء كبير من الزوار، وتُجمِّع التفاصيل التي يحتاجها
+المكتب.
+
+**المسار:**
+
+1. عند الوصول من حملة إعلانية، يلتقط `CaptureAttribution` معاملات
+   `utm_*` و `gclid` في كوكي أول-طرف يعيش ٩٠ يوماً (نافذة تحويلات Google Ads).
+2. أزرار الاتصال والواتساب روابط `<a>` حقيقية تحمل `data-track`.
+3. عند النقر يرسل `resources/js/app.js` إشارة عبر `navigator.sendBeacon` إلى
+   `/t/click`، ويُطلق حدث GA4 بالتوازي.
+4. `ClickTrackingController` يعيد إلصاق بيانات الحملة المحفوظة، ويصنّف الجهاز،
+   ويستبعد الزحف الآلي، ويخزّن الحدث.
+5. لوحة `/admin/clicks` تعرض الإجماليات والرسم اليومي وتوزيعاً حسب الصفحة
+   والمصدر والموضع والجهاز، مع تصدير CSV.
+6. تنبيهات بريدية: ملخص يومي (`clicks:digest`) وتنبيه فوري اختياري.
+
+**ضمانتان أساسيتان:**
+
+- **التتبع لا يعترض التحويل أبداً.** لا يوجد `preventDefault` ولا `onclick`.
+  إذا تعطّل السكربت أو حُجب أو سقط الخادم، يبقى الرابط يعمل ويصل الزائر إلى
+  الهاتف. مغطّى باختبار.
+- **لا يُخزَّن عنوان IP.** يُخزَّن مشتقّ HMAC منه بمفتاح التطبيق — لأن التجزئة
+  العادية قابلة للكسر بالتخمين على فضاء عناوين صغير.
+
+---
+
+## المسارات العامة
+
+| المسار | الوصف |
+|---|---|
+| `/` | الصفحة الرئيسية — صفحة السلطة المحلية الأساسية للمكتب |
+| `/الخدمات` | فهرس الخدمات، مقسّماً على المجالات الأربعة |
+| `/خدمات/{slug}` | صفحة خدمة |
+| `/عن-المحامي-ريان-الجهني` | الملف التعريفي |
+| `/التراخيص-والاعتمادات` | التراخيص الأربعة |
+| `/منهجية-العمل` | منهجية التعامل مع الملفات |
+| `/المدونة` | فهرس المقالات |
+| `/المدونة/{slug}` | قسم أو مقال (يُوزَّع حسب ما يطابقه) |
+| `/تواصل-معنا` | التواصل (‏GET و POST) |
+| `/سياسة-الخصوصية` | noindex |
+| `/الشروط-والأحكام` | noindex |
+| `/sitemap.xml` | خريطة الموقع |
+| `/robots.txt` | مبنيّ من المسار لا ملفاً ثابتاً |
+| `/t/click` | نقطة استقبال التتبع (POST، محدودة المعدل) |
+
+**عمداً لا توجد** صفحة `/محامي-جدة` منفصلة: صفحة ثانية تستهدف النية نفسها كانت
+ستنافس الصفحة الرئيسية دون أن تضيف شيئاً للقارئ.
+
+### الخدمات المنشورة حالياً
+
+`محاماة-الشركات` · `التحكيم-التجاري` · `التوثيق` · `التسجيل-العيني-للعقار`
+
+باقي الخدمات الـ ١٨ مُنشأة كمسودات: معرّفاتها ومجالاتها مثبّتة، وهي غير ظاهرة
+للزوار وغير مدرجة في خريطة الموقع حتى تُكتب نصوصها.
+
+---
+
+## قواعد المحتوى المطبَّقة في الكود
+
+هذه ليست إرشادات، بل سلوك مفروض بالنظام:
+
+- **أرقام التراخيص** تُعرض كما وردت تماماً، من مصدر واحد
+  (`config/site.php`). لم تُخترع جهة إصدار ولا تاريخ ولا شارة توثيق ولا رابط
+  تحقق.
+- **الحقول غير المزوّدة تختفي.** العنوان والخريطة وأوقات العمل والبريد وحسابات
+  التواصل محكومة بـ `Settings::filled()` — الحقل الفارغ يُخفي قسمه بالكامل بدل
+  أن يعرض بديلاً مفترضاً.
+- **علامة `[[NEEDS_CLIENT_CONFIRMATION]]`** تظهر في لوحة التحكم فقط.
+  `App\Support\Content` يحذف الفقرة الحاوية لها من كل عرض عام، واختبار يفشل إذا
+  تسرّبت إلى أي صفحة.
+- **البيانات المنظمة** لا تتضمن `aggregateRating` ولا `review` ولا `FAQPage` ولا
+  جوائز — كل خاصية تُصدَّر يجب أن تقابل معلومة صحيحة يراها الزائر على الصفحة
+  نفسها.
+- **لا "استشارة مجانية"** في أي مكان (مغطّى باختبار)، ولا وعود بنتائج، ولا
+  ادعاءات أفضلية.
+- **البذور (seeders)** لا تحتوي أي شهادة عميل أو تقييم أو دراسة حالة أو إحصائية
+  أو مقال تجريبي.
+
+---
+
+## دليل لوحة التحكم
+
+| الشاشة | الاستخدام |
+|---|---|
+| **نظرة عامة** | إحصاءات التحويلات، وقائمة «ما يحتاجه الموقع منك» |
+| **الخدمات** | إنشاء وتحرير صفحات الخدمات بأقسامها المنظمة |
+| **مجالات الخدمات** | المجالات الأربعة وترتيبها في القائمة |
+| **المقالات** | كتابة ونشر وجدولة المقالات |
+| **أقسام المدونة** | أقسام المدونة الأربعة |
+| **الصفحات الثابتة** | تحرير نصوص الصفحات المرتبطة بمسارات ثابتة |
+| **مكتبة الوسائط** | رفع الصور مع نص بديل عربي |
+| **تتبع النقرات** | لوحة التحويلات وتصديرها |
+| **رسائل النموذج** | رسائل نموذج التواصل (عند تفعيله) |
+| **إعدادات الموقع** | بيانات التواصل والحسابات والتنبيهات |
+| **التحويلات (301)** | خريطة روابط الموقع القديم |
+
+**نشر مقال:** المقالات ← كتابة مقال ← اكتب النص ← اختر القسم ← الحالة «منشور» ←
+حفظ. المقال يصبح حياً ويدخل خريطة الموقع في اللحظة نفسها.
+
+**حالات النشر:** `مسودة` غير ظاهرة إطلاقاً · `مجدول` يظهر تلقائياً عند حلول
+تاريخه · `منشور` ظاهر الآن.
+
+**المحرّر** يدعم العربية RTL أصلاً، ويعرض النص بأنماط الموقع نفسها أثناء
+الكتابة. العناوين تبدأ من المستوى الثاني لأن الأول محجوز لعنوان الصفحة.
+
+---
+
+## الصورة الشخصية
+
+الصورة المعتمدة للمحامي مصدرها `public/saudi-lawyer-hero-transparent.png`
+(‏1.4 ميجابايت، شفافة). لا تُقدَّم هذه النسخة للزوار إطلاقاً — يُشتقّ منها ثلاث
+نسخ WebP في `public/brand/`:
+
+| الملف | المقاس | الحجم |
+|---|---|---|
+| `lawyer-portrait-500.webp` | 500×782 | ‏24 ك.ب |
+| `lawyer-portrait-750.webp` | 750×1172 | ‏45 ك.ب |
+| `lawyer-portrait-1003.webp` | 1003×1568 | ‏88 ك.ب |
+
+أي تحديث للصورة يستلزم إعادة توليد النسخ الثلاث بالمقاسات نفسها مع الحفاظ على
+قناة الشفافية (‏`imagealphablending(false)` و`imagesavealpha(true)`، وإلا سُوّيت
+الشفافية إلى أسود). يوجد اختبار يفشل إن قُدِّم ملف PNG الأصلي للزوار.
+
+---
+
+## ما زال مطلوباً من العميل
+
+| العنصر | الأثر عند غيابه |
+|---|---|
+| ملفات الشعار (يُفضّل SVG أو PNG شفاف) | يُستخدم حالياً الشعار المستخرج من الصورة المزوّدة |
+| السيرة المهنية المعتمدة | صفحة «عن المحامي» تحمل تنبيهاً داخلياً، ولا يُنشر أي بديل مفترض |
+| عنوان المكتب | لا يُعرض أي عنوان |
+| رابط خرائط جوجل | لا يظهر زر الخريطة |
+| أوقات العمل | لا يُعرض القسم، ولا تُدرج في البيانات المنظمة |
+| البريد الإلكتروني | لا يظهر في التذييل ولا صفحة التواصل |
+| حسابات التواصل المعتمدة | لا تُعرض أي أيقونات |
+| معرّفات GA4 و Google Ads و Search Console | لا يُحمَّل أي كود تتبع خارجي |
+| روابط الموقع القديم | خريطة التحويلات فارغة |
+| مراجعة نصوص الخدمات قانونياً | النصوص مُعلَّمة `needs_review` في اللوحة |
+
+---
+
+## قائمة ما قبل الإطلاق
+
+1. `SITE_INDEXABLE=true` و `SITE_CANONICAL_URL=https://mohamah-ksa.com` في بيئة
+   الإنتاج. **ما دامت `false` فكل صفحة تحمل `noindex` و `robots.txt` يمنع الزحف
+   بالكامل** — وهذا مقصود لحماية بيئات التجربة.
+2. توجيه `http://` و `www.` إلى النطاق القياسي على مستوى الخادم أيضاً
+   (`EnforceCanonicalHost` يغطيه في التطبيق، لكن الطبقتين معاً أسلم).
+3. إدخال روابط الموقع القديم في **التحويلات (301)** — كل رابط إلى أقرب صفحة
+   مناسبة له فعلاً، لا إلى الصفحة الرئيسية.
+4. تعبئة بيانات التواصل في **إعدادات الموقع**.
+5. ضبط معرّفات GA4 و Google Ads في `.env`.
+6. مراجعة نصوص الخدمات قانونياً وإزالة علامة «يحتاج مراجعة».
+7. `php artisan migrate --force && npm run build`.
+8. جدولة `php artisan schedule:run` كل دقيقة على الخادم (تنشر المقالات المجدولة
+   وترسل الملخص اليومي).
+9. التحقق من `/sitemap.xml` و `/robots.txt` على النطاق الحيّ.
+10. فحص البيانات المنظمة عبر Google Rich Results Test.
+11. إضافة الموقع إلى Search Console ورفع خريطة الموقع.
+12. بعد أيام: مراجعة عمود «الطلبات» في التحويلات للتأكد من عمل الخريطة.
+
+---
+
+## المرحلة الثانية
+
+- نصوص الخدمات الـ ١٨ المتبقية.
+- قالب المقال وصفحات أقسام المدونة (البنية جاهزة، تنتظر المحتوى).
+- الملخصات التحريرية للمقالات الاثني عشر الأولى.
+- خريطة تحويلات الموقع القديم بعد تصدير روابطه.
