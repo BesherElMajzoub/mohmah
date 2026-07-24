@@ -85,6 +85,18 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
         }
     }
 
+    public function test_all_posts_have_focus_phrase_and_internal_service_links(): void
+    {
+        $this->seed(LawFirmInitialBlogPostsSeeder::class);
+
+        $posts = Post::query()->get();
+
+        foreach ($posts as $post) {
+            $this->assertNotEmpty($post->focus_phrase, "Post '{$post->title}' missing focus phrase");
+            $this->assertStringContainsString('/خدمات/', $post->body, "Post '{$post->title}' missing internal service link");
+        }
+    }
+
     public function test_high_priority_posts_exist_and_have_custom_conclusions(): void
     {
         $this->seed(LawFirmInitialBlogPostsSeeder::class);
@@ -100,7 +112,7 @@ class LawFirmInitialBlogPostsSeederTest extends TestCase
             $post = Post::query()->where('slug', $slug)->first();
             $this->assertNotNull($post, "High priority post missing for slug {$slug}");
             $this->assertStringContainsString('class="article-conclusion"', $post->body);
-            $this->assertStringDontSee('تواصل معنا', $post->body);
+            $this->assertStringNotContainsString('تواصل معنا', $post->body);
         }
     }
 

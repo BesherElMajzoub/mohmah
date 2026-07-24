@@ -28,6 +28,18 @@
 <meta property="og:url" content="{{ $seo->canonicalUrl() }}">
 <meta property="og:image" content="{{ $seo->imageUrl() }}">
 
+{{-- Dimensions let a scraper reserve the card layout before it has fetched
+     the image, which is what stops the first share of a new URL rendering as
+     a small-thumbnail card. Only emitted for uploads, where the size is
+     known — the default OG image is not a Media row. --}}
+@if ($seo->image?->width && $seo->image?->height)
+    <meta property="og:image:width" content="{{ $seo->image->width }}">
+    <meta property="og:image:height" content="{{ $seo->image->height }}">
+@endif
+@if ($seo->image?->alt_ar)
+    <meta property="og:image:alt" content="{{ $seo->image->alt_ar }}">
+@endif
+
 @if ($seo->publishedTime)
     <meta property="article:published_time" content="{{ $seo->publishedTime }}">
 @endif
@@ -42,3 +54,6 @@
     <meta name="twitter:description" content="{{ $seo->description }}">
 @endif
 <meta name="twitter:image" content="{{ $seo->imageUrl() }}">
+@if ($seo->image?->alt_ar)
+    <meta name="twitter:image:alt" content="{{ $seo->image->alt_ar }}">
+@endif

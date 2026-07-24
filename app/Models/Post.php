@@ -66,6 +66,15 @@ class Post extends Model
         return "/المدونة/{$this->slug}";
     }
 
+    /**
+     * The excerpt already introduces the article to the reader, which is the
+     * same job a meta description does.
+     */
+    protected function seoDescriptionFallback(): ?string
+    {
+        return $this->excerpt;
+    }
+
     public function heading(): string
     {
         return filled($this->h1) ? $this->h1 : $this->title;

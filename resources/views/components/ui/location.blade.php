@@ -10,7 +10,6 @@
     $settings = app(\App\Support\Settings::class);
 
     $hasAddress = $settings->filled('office_address');
-    $hasMap = $settings->filled('map_url');
     $hasHours = $settings->filled('office_hours');
 
     $dark = $tone === 'dark';
@@ -56,18 +55,9 @@
                     </p>
                 @endif
 
-                @if ($hasMap)
-                    <p class="mt-6">
-                        <a href="{{ $settings->get('map_url') }}"
-                           target="_blank"
-                           rel="noopener"
-                           class="group inline-flex items-center gap-2.5 font-display
-                                  {{ $dark ? 'text-gold-soft hover:text-gold' : 'text-ink hover:text-gold-deep' }}">
-                            عرض الموقع على خرائط جوجل
-                            <span class="h-px w-5 bg-gold transition-all group-hover:w-8" aria-hidden="true"></span>
-                        </a>
-                    </p>
-                @endif
+                {{-- No map link here: the map panel below carries it, and the
+                     office should not be linked to Google Maps twice in one
+                     section. --}}
             </div>
 
             {{-- Direct contact. Kept in this section because "where are you"
@@ -106,5 +96,8 @@
             </div>
             @endif
         </div>
+
+        {{-- The map lives in the footer, where it is reachable from every page
+             rather than only from the two that carry this section. --}}
     </div>
 </section>

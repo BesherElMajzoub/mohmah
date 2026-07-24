@@ -415,6 +415,92 @@
     </section>
 @endif
 
+{{-- ===================================================================
+     Search-intent guide
+     ===================================================================
+     One section, written once, that answers the phrasings people actually
+     type — "محامي شركات"، "محامي توثيق عقود"، "محامي منازعات عقارية" — in
+     honest prose instead of a doorway page per keyword. Each block states
+     only work the office is licensed for; the closing paragraph converts
+     the "افضل محامي" query into verifiable criteria rather than a boast.
+     =================================================================== --}}
+<section class="border-t border-stone bg-ivory">
+    <div class="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+        <x-ui.section-heading eyebrow="عن ماذا تبحث؟" level="h2">
+            مكتب محاماة في جدة يجمع تراخيص المحاماة والتوثيق والتحكيم والعقار
+            <x-slot:description>
+                من يبحث عن شركة محاماة أو مكتب محامي سعودي يحتاج قبل أي شيء إلى
+                التحقق من الترخيص ضمن أسماء المحامين المعتمدين بوزارة العدل.
+                مكتب المحامي ريان الجهني مرخّص في المحاماة برقم
+                <span class="num" dir="ltr">432200</span>، ويعمل من جدة مع
+                الشركات والمستثمرين وملّاك العقارات.
+            </x-slot:description>
+        </x-ui.section-heading>
+
+        @php
+            // Each entry answers a real search intent with work the office is
+            // actually licensed to do — nothing here is a new service claim.
+            $intents = [
+                [
+                    'title' => 'محامي شركات وتأسيس الشركات',
+                    'body' => 'من صياغة عقد التأسيس إلى الحوكمة اليومية، يعمل المكتب بصفته محامي شركات: تأسيس الشركات، صياغة ومراجعة عقود الشركات والشركاء، وإجراءات تصفية الشركات عند إنهاء النشاط أو إعادة هيكلته.',
+                ],
+                [
+                    'title' => 'محامي قضايا عقارية ومنازعات عقارية',
+                    'body' => 'نزاعات الملكية والصكوك، والمطالبات الإيجارية، والتسجيل العيني للعقار — يتولى المكتب المنازعات العقارية بترافع مبني على المستندات والقيود النظامية، لا على الاجتهاد الشفهي.',
+                ],
+                [
+                    'title' => 'محامٍ وموثّق — توثيق العقود والوكالات',
+                    'body' => 'بصفته محامي توثيق مرخّصاً من وزارة العدل، يوثّق المكتب الوكالات وعقود الشركات والإقرارات، إضافة إلى المسائل المرتبطة بالورثة وقسمة التركات والقضايا الأسرية المتصلة بها.',
+                ],
+                [
+                    'title' => 'منازعات شركات التأمين',
+                    'body' => 'يمثّل المكتب المنشآت والأفراد في المطالبات ضد شركات التأمين أمام اللجان المختصة — من رفض التعويض إلى الخلاف على تقدير قيمته — بملف مستندي مكتمل قبل رفع الدعوى.',
+                ],
+                [
+                    'title' => 'القضايا العمالية',
+                    'body' => 'بصفته محامي قضايا عمالية، يعمل المكتب مع أصحاب الأعمال والعمال في منازعات عقود العمل والأجور ومستحقات نهاية الخدمة أمام المحاكم العمالية.',
+                ],
+                [
+                    'title' => 'استشارة قانونية ورقم محامٍ في جدة',
+                    'body' => 'سواء كنت تبحث عن شركة استشارات قانونية أو عن رقم محامٍ تتصل به مباشرة، يمكنك التواصل على ' . config('site.phone_display') . ' لعرض ملفك وتحديد المسار القانوني المناسب له.',
+                ],
+            ];
+        @endphp
+
+        {{-- Editorial rows, not a card grid: a block of equal boxes this
+             close to the page end read as a second footer. The rows reuse
+             the qualification section's device — gold dash, hairline rule —
+             so the section reads as content, not as navigation. --}}
+        <div class="mt-10 border-t border-stone">
+            @foreach ($intents as $intent)
+                <div class="grid gap-3 border-b border-stone py-8 lg:grid-cols-12 lg:gap-10">
+                    <h3 class="flex items-start gap-4 font-display text-xl leading-snug text-ink lg:col-span-4">
+                        <span class="mt-[0.8em] h-px w-5 shrink-0 bg-gold" aria-hidden="true"></span>
+                        {{ $intent['title'] }}
+                    </h3>
+                    <p class="leading-relaxed text-charcoal-soft lg:col-span-8 lg:ps-0 ps-9">
+                        {{ $intent['body'] }}
+                    </p>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- The "افضل محامي" intent, answered without self-praise: the claim
+             is redirected to criteria the reader can verify. Set off with the
+             identity's gold side-rule so it closes the section as a statement
+             rather than trailing as fine print. --}}
+        <div class="mt-12 border-s-2 border-gold ps-8">
+            <p class="max-w-3xl leading-relaxed text-charcoal">
+                معيار اختيار افضل محامي شركات أو أفضل مكتب محاماة ليس شعاراً يرفعه
+                المكتب عن نفسه؛ المحامي الشاطر — كما يسميه الناس — هو من يملك ترخيصاً
+                يمكن التحقق منه، ومنهجية عمل واضحة، وخبرة في ملفات مشابهة لملفك. هذه
+                المعايير الثلاثة هي ما يعرضه هذا الموقع صفحةً صفحة.
+            </p>
+        </div>
+    </div>
+</section>
+
 <x-ui.location placement="home_location" />
 
 <x-ui.cta-band placement="home_footer_cta"

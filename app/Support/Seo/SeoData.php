@@ -27,6 +27,7 @@ class SeoData
         public readonly string $type = 'website',
         public readonly ?string $publishedTime = null,
         public readonly ?string $modifiedTime = null,
+        public readonly int $page = 1,
     ) {}
 
     /**
@@ -46,22 +47,48 @@ class SeoData
         return "{$this->title} | {$office}";
     }
 
+    /**
+     * Self-referencing, and page-aware.
+     *
+     * A paginated listing keeps `?page=N` in its canonical. Pointing page 2 at
+     * page 1 while page 2 is also noindex sends Google two contradictory
+     * instructions about the same URL — "this is a duplicate of that one" and
+     * "drop it" — and the listing's own pagination is what suffers.
+     */
     public function canonicalUrl(): string
     {
-        return $this->canonical ?? Url::canonical(request()->path());
+        $base = $this->canonical ?? Url::canonical(request()->path());
+
+        return $this->page > 1 ? $base.'?page='.$this->page : $base;
     }
 
     /**
-     * Two gates: the page's own decision, and the environment's.
+     * Three gates, in order of authority.
      *
-     * A page marked indexable on a staging deploy still emits noindex,
-     * because config('site.indexable') is false there.
+     * The environment gate is absolute: a page marked indexable on a staging
+     * deploy still emits noindex, because config('site.indexable') is false
+     * there — and nofollow with it, since nothing on that host should be
+     * crawled at all.
+     *
+     * The editorial gate (an admin unticking "indexable", the legal
+     * boilerplate) is a dead end by intent: noindex, nofollow.
+     *
+     * Pagination is neither. Page 2 of a listing has no search intent of its
+     * own, so it stays out of the index — but it is the ONLY crawl path to the
+     * articles it links to. `follow` is what keeps those articles reachable
+     * through internal links rather than the sitemap alone.
      */
     public function robots(): string
     {
-        return $this->indexable && config('site.indexable')
-            ? 'index, follow, max-image-preview:large, max-snippet:-1'
-            : 'noindex, nofollow';
+        if (! config('site.indexable') || ! $this->indexable) {
+            return 'noindex, nofollow';
+        }
+
+        if ($this->page > 1) {
+            return 'noindex, follow';
+        }
+
+        return 'index, follow, max-image-preview:large, max-snippet:-1';
     }
 
     public function imageUrl(): string
@@ -93,6 +120,7 @@ class SeoData
             type: $this->type,
             publishedTime: $this->publishedTime,
             modifiedTime: $this->modifiedTime,
+            page: $this->page,
         );
     }
 }

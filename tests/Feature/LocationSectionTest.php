@@ -48,8 +48,7 @@ class LocationSectionTest extends TestCase
     }
 
     /**
-     * With no address, map or hours supplied, none of those blocks may appear
-     * in any form.
+     * With no address or hours supplied, neither block may appear in any form.
      */
     public function test_nothing_is_invented_while_the_settings_are_empty(): void
     {
@@ -57,8 +56,7 @@ class LocationSectionTest extends TestCase
             $this->get($path)
                 ->assertOk()
                 ->assertDontSee('عنوان المكتب')
-                ->assertDontSee('أوقات العمل')
-                ->assertDontSee('عرض الموقع على خرائط جوجل');
+                ->assertDontSee('أوقات العمل');
         }
     }
 
@@ -73,7 +71,6 @@ class LocationSectionTest extends TestCase
             ->assertOk()
             ->assertSee('حي الروضة، جدة')
             ->assertSee('الأحد إلى الخميس، 9 ص — 5 م')
-            ->assertSee('عرض الموقع على خرائط جوجل')
             ->assertSee('https://maps.app.goo.gl/example', false);
     }
 

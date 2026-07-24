@@ -62,8 +62,19 @@ class SitemapController extends Controller
         $entries[] = $this->entry('/تواصل-معنا', null, 'yearly', '0.7');
 
         // The blog index is only worth listing once it has something on it.
-        if (Post::query()->forSitemap()->exists()) {
-            $entries[] = $this->entry('/المدونة', null, 'weekly', '0.7');
+        // Its lastmod is the newest article: that is exactly when the listing
+        // last changed, and it is what tells Google the index is worth
+        // re-crawling after a publish. (changefreq/priority are kept for other
+        // consumers, but Google ignores both — lastmod is the field that acts.)
+        $latestPost = Post::query()->forSitemap()->latest('published_at')->first();
+
+        if ($latestPost) {
+            $entries[] = $this->entry(
+                '/المدونة',
+                $latestPost->published_at?->toAtomString(),
+                'weekly',
+                '0.7',
+            );
         }
 
         // --- Editable pages ------------------------------------------------
@@ -95,11 +106,23 @@ class SitemapController extends Controller
             });
 
         // --- Blog categories -----------------------------------------------
+        // A category listing changes when an article lands in it, so its
+        // lastmod is its newest published post — same reasoning as the index.
         PostCategory::query()
             ->get()
-            ->filter(fn (PostCategory $c) => $c->publishedPosts()->exists())
             ->each(function (PostCategory $category) use (&$entries) {
-                $entries[] = $this->entry($category->path(), null, 'weekly', '0.6');
+                $newest = $category->publishedPosts()
+                    ->latest('published_at')
+                    ->first();
+
+                if ($newest) {
+                    $entries[] = $this->entry(
+                        $category->path(),
+                        $newest->published_at?->toAtomString(),
+                        'weekly',
+                        '0.6',
+                    );
+                }
             });
 
         // --- Articles ------------------------------------------------------

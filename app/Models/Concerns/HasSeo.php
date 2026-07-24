@@ -59,9 +59,41 @@ trait HasSeo
         return filled($this->seo_title) ? $this->seo_title : $this->title;
     }
 
+    /**
+     * The meta description, with a fallback to the record's own summary copy.
+     *
+     * Without the fallback, any article or service published before someone
+     * remembers to fill `seo_description` ships with no description, no
+     * og:description and no twitter:description at all — the tag is omitted
+     * entirely rather than rendered empty. The fallback uses text the editor
+     * already wrote and a visitor already sees, so nothing is invented.
+     */
     public function metaDescription(): ?string
     {
-        return filled($this->seo_description) ? $this->seo_description : null;
+        if (filled($this->seo_description)) {
+            return $this->seo_description;
+        }
+
+        $fallback = trim((string) $this->seoDescriptionFallback());
+
+        if ($fallback === '') {
+            return null;
+        }
+
+        // Matches the seo_description column limit, so a fallback can never be
+        // longer than a value typed by hand.
+        return mb_strimwidth($fallback, 0, 320, '…');
+    }
+
+    /**
+     * Model-supplied source for a missing meta description.
+     *
+     * Null here rather than abstract: categories and other records that have
+     * no summary field simply do not participate.
+     */
+    protected function seoDescriptionFallback(): ?string
+    {
+        return null;
     }
 
     /**

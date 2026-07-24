@@ -64,6 +64,15 @@ class Service extends Model
     }
 
     /**
+     * The summary is the one-paragraph statement of what the service is — the
+     * same job a meta description does.
+     */
+    protected function seoDescriptionFallback(): ?string
+    {
+        return $this->summary;
+    }
+
+    /**
      * The verified licences that are factually relevant to this service.
      *
      * Resolved from config so the numbers have exactly one source of truth and

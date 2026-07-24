@@ -167,6 +167,7 @@ class Schema
             'mainEntityOfPage' => $post->canonicalUrl(),
             'inLanguage' => 'ar',
             'publisher' => ['@id' => Url::host().'/#organization'],
+            'isPartOf' => ['@id' => Url::host().'/#website'],
             'articleSection' => $post->category->title,
         ];
 
@@ -187,14 +188,14 @@ class Schema
         }
 
         if (filled($post->author_name)) {
-            $schema['author'] = ['@type' => 'Person', 'name' => $post->author_name];
+            $schema['author'] = $this->personReference($post->author_name);
         }
 
         // Only claim review when a named reviewer is actually credited on the
         // page — this is the property that signals legal oversight, so it has
         // to be true.
         if (filled($post->reviewer_name)) {
-            $schema['reviewedBy'] = ['@type' => 'Person', 'name' => $post->reviewer_name];
+            $schema['reviewedBy'] = $this->personReference($post->reviewer_name);
         }
 
         if ($post->coverImage) {
@@ -202,6 +203,37 @@ class Schema
         }
 
         return $this->document($schema);
+    }
+
+    /**
+     * A named credit, tied to the office's lawyer when it is him.
+     *
+     * A bare `{"@type":"Person","name":"..."}` is an anonymous node: repeated
+     * on fifty articles it describes fifty unrelated people. When the name is
+     * the lawyer's, referencing the #lawyer @id instead makes every article he
+     * wrote or reviewed resolve to the one Person the about page describes and
+     * the licences page evidences.
+     *
+     * The comparison is on the configured name, which is verified fact — a
+     * guest author never picks up the reference.
+     *
+     * Note the @type and name are kept alongside the @id rather than emitting
+     * a bare reference. Unlike #organization, the #lawyer node is only defined
+     * on the about page, so a reference-only node would dangle on every
+     * article. This way the node is self-describing wherever it appears and
+     * still carries the identifier that merges it with the about page's.
+     *
+     * @return array<string, mixed>
+     */
+    private function personReference(string $name): array
+    {
+        $person = ['@type' => 'Person', 'name' => $name];
+
+        if (trim($name) === trim((string) config('site.lawyer_name'))) {
+            return ['@id' => Url::host().'/#lawyer'] + $person;
+        }
+
+        return $person;
     }
 
     /**

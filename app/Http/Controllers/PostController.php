@@ -11,6 +11,18 @@ class PostController extends Controller
 {
     private const PER_PAGE = 9;
 
+    /**
+     * The requested page, floored at 1.
+     *
+     * `?page=0` and `?page=-3` are served as page 1 by the paginator, so they
+     * must not be treated as pagination for robots or canonical purposes —
+     * otherwise a junk query string turns the blog index into a noindex page.
+     */
+    private function currentPage(): int
+    {
+        return max(1, request()->integer('page', 1));
+    }
+
     public function index(): View
     {
         $breadcrumbs = [
@@ -21,10 +33,10 @@ class PostController extends Controller
         $seo = (new SeoData(
             title: 'المدونة',
             description: 'مقالات تحليلية موجّهة لأصحاب الشركات والمستثمرين وملّاك العقارات في الشركات والعقود والتحكيم التجاري والتوثيق والتركات والخدمات العقارية.',
-            // Paginated pages beyond the first are noindex: page 2 of a
-            // listing has no search intent of its own and would compete with
-            // the articles it links to.
-            indexable: request()->integer('page', 1) <= 1,
+            // Pages beyond the first are noindex but still followed — see
+            // SeoData::robots(). Passing the page number rather than folding it
+            // into `indexable` is what keeps those two apart.
+            page: $this->currentPage(),
         ))->withBreadcrumbs($breadcrumbs);
 
         return view('pages.posts.index', [
@@ -72,7 +84,8 @@ class PostController extends Controller
             title: $category->metaTitle(),
             description: $category->metaDescription(),
             canonical: $category->canonicalUrl(),
-            indexable: $category->isIndexable() && request()->integer('page', 1) <= 1,
+            indexable: $category->isIndexable(),
+            page: $this->currentPage(),
         ))->withBreadcrumbs($breadcrumbs);
 
         return view('pages.posts.index', [

@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Page;
+use App\Models\Post;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Url;
+use Database\Seeders\LawFirmInitialBlogPostsSeeder;
 use Database\Seeders\PageSeeder;
 use Database\Seeders\ServiceSeeder;
 use Database\Seeders\SettingsSeeder;
@@ -224,5 +226,101 @@ class SeoMetadataTest extends TestCase
         $page = Page::byKey(Page::KEY_LICENSES);
 
         $this->get($page->path())->assertSee($page->h1, false);
+    }
+
+    /**
+     * Publish the seeded articles so the blog index actually paginates.
+     */
+    private function seedPublishedPosts(): void
+    {
+        $this->seed(LawFirmInitialBlogPostsSeeder::class);
+
+        Post::query()->update([
+            'status' => 'published',
+            'published_at' => now()->subDay(),
+        ]);
+    }
+
+    /**
+     * The distinction that matters: page 2 must stay out of the index without
+     * becoming a crawl dead end. `nofollow` here would leave every article
+     * past the first page reachable only through the sitemap.
+     */
+    public function test_paginated_listings_are_noindex_but_still_followed(): void
+    {
+        $this->seedPublishedPosts();
+
+        $this->get('/المدونة?page=2')
+            ->assertOk()
+            ->assertSee('content="noindex, follow"', false)
+            ->assertDontSee('content="noindex, nofollow"', false);
+    }
+
+    public function test_paginated_listings_canonicalise_to_themselves(): void
+    {
+        $this->seedPublishedPosts();
+
+        $this->get('/المدونة?page=2')
+            ->assertSee('<link rel="canonical" href="'.Url::canonical('/المدونة').'?page=2">', false);
+    }
+
+    /**
+     * A junk page parameter must not turn the indexable first page into a
+     * noindex one — the paginator serves it as page 1, so the metadata has to
+     * agree.
+     */
+    public function test_a_junk_page_parameter_leaves_the_first_page_indexable(): void
+    {
+        $this->seedPublishedPosts();
+
+        foreach (['?page=0', '?page=-4', '?page=abc'] as $query) {
+            $this->get('/المدونة'.$query)
+                ->assertSee('content="index, follow', false);
+        }
+    }
+
+    /**
+     * An article published before anyone filled seo_description must still
+     * ship a description rather than omitting the tag entirely.
+     */
+    public function test_meta_description_falls_back_to_the_excerpt(): void
+    {
+        $this->seedPublishedPosts();
+
+        $post = Post::query()->published()->firstOrFail();
+        $post->update(['seo_description' => null]);
+
+        $this->get($post->path())
+            ->assertOk()
+            ->assertSee('<meta name="description" content="'.e($post->excerpt).'">', false);
+    }
+
+    /**
+     * Articles the lawyer wrote must resolve to the same Person entity the
+     * about page describes, not to a fresh anonymous node per article.
+     */
+    public function test_articles_credit_the_lawyer_as_one_entity(): void
+    {
+        $this->seedPublishedPosts();
+
+        $post = Post::query()->published()->firstOrFail();
+        $post->update(['author_name' => config('site.lawyer_name')]);
+
+        $this->get($post->path())
+            ->assertOk()
+            ->assertSee(Url::host().'/#lawyer', false);
+    }
+
+    public function test_a_guest_author_does_not_borrow_the_lawyers_identity(): void
+    {
+        $this->seedPublishedPosts();
+
+        $post = Post::query()->published()->firstOrFail();
+        $post->update(['author_name' => 'كاتب ضيف']);
+
+        $html = $this->get($post->path())->assertOk()->getContent();
+
+        $this->assertStringContainsString('كاتب ضيف', $html);
+        $this->assertStringNotContainsString('/#lawyer', $html);
     }
 }
