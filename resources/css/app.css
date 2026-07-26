@@ -161,29 +161,6 @@
         background-size: 72px 72px;
     }
 
-    /* --- Hero portrait ----------------------------------------------------
-       The arch from the wordmark, enlarged to frame the lawyer. It earns its
-       place here in a way it did not around a small logo mark: an arch is for
-       framing a figure, and it ties the photograph to the identity instead of
-       leaving a cut-out floating on flat colour.
-
-       It also does structural work — the bisht is nearly as dark as the ink
-       background, so without a lighter surface behind him the silhouette
-       would disappear. */
-    .portrait-arch {
-        background:
-            radial-gradient(
-                ellipse 70% 55% at 50% 42%,
-                color-mix(in srgb, var(--color-ink-600) 85%, transparent),
-                transparent 72%
-            ),
-            linear-gradient(to top, var(--color-ink-700), color-mix(in srgb, var(--color-ink-700) 25%, transparent));
-        border: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
-        border-start-start-radius: 50% 30%;
-        border-start-end-radius: 50% 30%;
-        border-block-end: 0;
-    }
-
     /* A staggered rise for the hero only. Each child sets --i to position
        itself in the sequence. Globally disabled under prefers-reduced-motion
        by the media query at the end of this file. */

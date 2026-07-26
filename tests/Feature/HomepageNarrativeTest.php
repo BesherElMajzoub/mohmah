@@ -86,35 +86,53 @@ class HomepageNarrativeTest extends TestCase
     }
 
     /**
-     * The portrait is the hero's LCP element, so it must be served from the
-     * derived WebP set — never the 1.4 MB source PNG, which would be roughly
+     * The hero carries the drawn emblem, not photography. The heavy source
+     * PNG in particular must never reach a visitor: at 1.4 MB it is roughly
      * fifteen times the weight of the whole rest of the page.
      */
-    public function test_the_hero_portrait_is_served_optimised(): void
+    public function test_the_hero_carries_the_emblem_rather_than_photography(): void
     {
         $html = $this->get('/')->getContent();
 
-        $this->assertStringContainsString('brand/lawyer-portrait-750.webp', $html);
-        $this->assertStringContainsString('srcset', $html);
+        $this->assertStringContainsString('viewBox="0 0 400 520"', $html);
 
-        $this->assertStringNotContainsString(
-            'saudi-lawyer-hero-transparent.png',
-            $html,
-            'The unoptimised source PNG must never be served to visitors.'
+        foreach (['lawyer-portrait', 'saudi-lawyer-hero-transparent.png'] as $image) {
+            $this->assertStringNotContainsString(
+                $image,
+                $html,
+                'The homepage is type-led and drawn; it serves no portrait photography.'
+            );
+        }
+    }
+
+    /**
+     * The emblem appears twice on this page and each copy carries its own
+     * gradient and clip-path ids. Shared ids would not fail visibly in every
+     * browser, which is exactly why it is asserted rather than eyeballed:
+     * the second copy would silently point at the first copy's definitions.
+     */
+    public function test_each_emblem_owns_its_svg_ids(): void
+    {
+        $html = $this->get('/')->getContent();
+
+        preg_match_all('/id="(emblem-[^"]+)"/', $html, $matches);
+
+        $this->assertGreaterThan(1, count($matches[1]), 'The emblem defines ids to reference.');
+        $this->assertSame(
+            $matches[1],
+            array_values(array_unique($matches[1])),
+            'Two emblems on one page must not share svg ids.'
         );
     }
 
     /**
-     * The portrait is of a real, named person. Its alt text names him rather
-     * than describing a generic figure, and the intrinsic dimensions are
-     * declared so the hero does not shift as it decodes.
+     * The emblem is decoration, not content: it states nothing the text does
+     * not, so it stays out of the accessibility tree instead of making a
+     * screen reader describe a drawing of a building.
      */
-    public function test_the_portrait_is_attributed_and_reserves_its_space(): void
+    public function test_the_emblem_is_hidden_from_assistive_technology(): void
     {
-        $this->get('/')
-            ->assertSee('alt="المحامي ريان الجهني"', false)
-            ->assertSee('width="1003"', false)
-            ->assertSee('height="1568"', false);
+        $this->get('/')->assertSee('role="presentation"', false);
     }
 
     /**

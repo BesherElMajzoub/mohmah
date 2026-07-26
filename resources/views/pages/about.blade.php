@@ -35,23 +35,12 @@
                 @endif
             </div>
 
-            {{-- The approved portrait of the lawyer. --}}
+            {{-- The identity's emblem in place of a portrait, matching the
+                 homepage so the two pages are recognisably the same office. --}}
             <div class="relative aspect-[4/5] w-full max-w-xs overflow-hidden rounded-sm border border-gold/30">
                 <div class="grid-motif absolute inset-0 opacity-60" aria-hidden="true"></div>
 
-                {{-- Cropped from the bottom, never the top — the source is
-                     taller than this 4:5 frame and a bottom anchor would cut
-                     the face off. --}}
-                <img src="{{ asset('brand/lawyer-portrait-500.webp') }}"
-                     srcset="{{ asset('brand/lawyer-portrait-500.webp') }} 500w,
-                             {{ asset('brand/lawyer-portrait-750.webp') }} 750w"
-                     sizes="20rem"
-                     alt="المحامي ريان الجهني"
-                     width="500"
-                     height="782"
-                     fetchpriority="high"
-                     decoding="async"
-                     class="absolute inset-0 h-full w-full object-cover object-top">
+                <x-ui.brand-emblem class="absolute inset-0 h-full w-full p-6" />
             </div>
         </div>
     </div>

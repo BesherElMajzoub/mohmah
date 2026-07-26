@@ -116,17 +116,52 @@ document.addEventListener('click', (event) => {
 /**
  * Header treatment on scroll.
  *
- * The header starts transparent over the hero and gains a solid background
- * once the page scrolls, so the hero is never cropped by a bar. Passive
- * listener, class toggle only — no layout is read during the scroll.
+ * Scrolling collapses the utility strip and shrinks the mark, so the sticky
+ * bar stays compact while reading.
+ *
+ * Two thresholds rather than one, and this is the whole point of the code
+ * below: collapsing the strip removes about 56px from a header that sits in
+ * the document flow, so everything under it moves up. With a single
+ * threshold the page could land back above it, expand, push the content
+ * down, cross it again — and the bar visibly shook on slow scrolls near the
+ * top. The gap between collapse and expand is wider than the height the
+ * header loses, which makes that loop impossible.
+ *
+ * Passive listener, and the read is deferred to a frame so a fast scroll
+ * cannot queue a layout read per event.
  */
 const header = document.querySelector('[data-site-header]');
 
 if (header) {
+    const COLLAPSE_AT = 96;
+    const EXPAND_AT = 24;
+
+    let collapsed = null;
+    let queued = false;
+
     const applyScrollState = () => {
-        header.classList.toggle('is-scrolled', window.scrollY > 24);
+        queued = false;
+
+        const y = window.scrollY;
+        const next = collapsed ? y > EXPAND_AT : y > COLLAPSE_AT;
+
+        if (next === collapsed) {
+            return;
+        }
+
+        collapsed = next;
+        header.classList.toggle('is-scrolled', next);
+    };
+
+    const queueScrollState = () => {
+        if (queued) {
+            return;
+        }
+
+        queued = true;
+        requestAnimationFrame(applyScrollState);
     };
 
     applyScrollState();
-    window.addEventListener('scroll', applyScrollState, { passive: true });
+    window.addEventListener('scroll', queueScrollState, { passive: true });
 }

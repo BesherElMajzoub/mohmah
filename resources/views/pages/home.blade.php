@@ -33,7 +33,11 @@
     <div class="relative mx-auto grid max-w-7xl items-end gap-y-0 px-5 lg:grid-cols-12 lg:gap-x-8 lg:px-8">
 
         {{-- --- The argument ------------------------------------------- --}}
-        <div class="pb-16 pt-24 lg:col-span-7 lg:self-center lg:pb-28 lg:pt-28">
+        {{-- The top padding is deliberately small. The header is ink and so is
+             this section, so the two merge into one field and there is no edge
+             for generous space to sit against — it just reads as a void
+             between the navigation and the first line. --}}
+        <div class="pb-14 pt-10 lg:col-span-7 lg:self-center lg:pb-24 lg:pt-14">
             <p class="rise flex items-center gap-3 text-sm text-gold-soft" style="--i: 0">
                 <span class="h-px w-10 bg-gold" aria-hidden="true"></span>
                 مكتب المحامي ريان الجهني — {{ config('site.city') }}
@@ -72,29 +76,17 @@
             </p>
         </div>
 
-        {{-- --- The lawyer --------------------------------------------------
-             Bottom-aligned with no padding beneath, so the figure stands on
+        {{-- --- The emblem ----------------------------------------------------
+             An architectural drawing rather than a portrait: the office is not
+             selling a face, and a photograph of one person would date the page
+             the moment anything about the practice changed.
+
+             Bottom-aligned with no padding beneath, so the facade stands on
              the section edge rather than floating in it. --}}
         <div class="relative lg:col-span-5 lg:self-end">
-            <div class="relative mx-auto w-full max-w-[19rem] lg:max-w-none">
-
-                {{-- The arch sits behind and slightly inside the figure's
-                     footprint, so his shoulders break its outline instead of
-                     being contained by it. --}}
-                <div class="portrait-arch absolute inset-x-4 bottom-0 top-10 lg:inset-x-8 lg:top-16"
-                     aria-hidden="true"></div>
-
-                <img src="{{ asset('brand/lawyer-portrait-750.webp') }}"
-                     srcset="{{ asset('brand/lawyer-portrait-500.webp') }} 500w,
-                             {{ asset('brand/lawyer-portrait-750.webp') }} 750w,
-                             {{ asset('brand/lawyer-portrait-1003.webp') }} 1003w"
-                     sizes="(min-width: 1024px) 40vw, 19rem"
-                     alt="المحامي ريان الجهني"
-                     width="1003"
-                     height="1568"
-                     fetchpriority="high"
-                     decoding="async"
-                     class="relative block w-full">
+            <div class="rise relative mx-auto w-full max-w-[18rem] lg:max-w-[30rem]"
+                 style="--i: 4">
+                <x-ui.brand-emblem class="block w-full" />
             </div>
         </div>
     </div>
@@ -320,28 +312,14 @@
 <section class="bg-ivory">
     <div class="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
         <div class="grid items-center gap-14 lg:grid-cols-2">
-            {{-- The approved portrait. Cropped to the upper body here rather
-                 than repeating the full-length hero framing, so the two
-                 appearances on one page read as different photographs. --}}
-            <div class="relative aspect-[4/5] max-w-md overflow-hidden rounded-sm bg-ink lg:order-last">
+            {{-- The emblem again, framed rather than bled off the edge as it
+                 is in the hero — the same building, drawn at a different
+                 scale, so the two appearances on one page do not read as the
+                 identical graphic pasted twice. --}}
+            <div class="relative aspect-[4/5] max-w-md overflow-hidden rounded-sm border border-gold/25 bg-ink lg:order-last">
                 <div class="grid-motif absolute inset-0 opacity-50" aria-hidden="true"></div>
 
-                {{-- object-cover with a top anchor. The source is far taller
-                     than this 4:5 frame, so letting it sit at full width and
-                     bottom-align cropped his head off — the crop has to come
-                     off the robe, not the face. --}}
-                <img src="{{ asset('brand/lawyer-portrait-750.webp') }}"
-                     srcset="{{ asset('brand/lawyer-portrait-500.webp') }} 500w,
-                             {{ asset('brand/lawyer-portrait-750.webp') }} 750w"
-                     sizes="(min-width: 1024px) 28rem, 100vw"
-                     alt="المحامي ريان الجهني"
-                     width="750"
-                     height="1172"
-                     loading="lazy"
-                     decoding="async"
-                     class="absolute inset-0 h-full w-full object-cover object-top">
-
-                <div class="pointer-events-none absolute inset-6 border border-gold/30" aria-hidden="true"></div>
+                <x-ui.brand-emblem class="absolute inset-0 h-full w-full p-8" />
             </div>
 
             <div>
